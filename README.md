@@ -1,5 +1,14 @@
 # Private DCA Bot (FHEVM)
 
+
+ <h2>
+ <p align="center">
+  <a href="https://drive.google.com/file/d/1o-T9vzMeOcBl7K9JIVmDfkh3nTMMZQxh/view?usp=sharing" target="_blank" rel="noopener noreferrer">
+    🎥 Video PrivatePortfolio_demo
+  </a>
+ </p>
+</h2>
+
 An FHE-powered Dollar-Cost Averaging (DCA) bot for **Sepolia**. Users deposit testnet **USDC**, submit **private DCA intents** (amount per tick & total budget encrypted on-chain), and periodically trigger batches. Each batch produces an **encrypted total** that the UI can publicly decrypt via Zama’s Relayer/Gateway. After decryption, the front-end can **finalize** the batch (swap USDC→ETH through a Uniswap V2 router) and **distribute ETH proportionally** to all participants—balances stay encrypted.
 
 > **Contract:** `DcaBatcher`
