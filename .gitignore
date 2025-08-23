@@ -1,0 +1,12 @@
+node_modules/
+.env
+dist/
+build/
+coverage/
+.vscode/
+.DS_Store
+# Hardhat
+artifacts/
+cache/
+# Logs
+*.log
