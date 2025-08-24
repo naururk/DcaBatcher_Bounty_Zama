@@ -2,264 +2,265 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <!-- FHEVM / Relayer SDK needs COOP/COEP -->
+    <!-- Needed for Zama Relayer SDK (WASM / SharedArrayBuffer) -->
     <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin" />
     <meta http-equiv="Cross-Origin-Embedder-Policy" content="require-corp" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Private DCA Bot — ZAMA FHEVM</title>
+    <title>Private DCA Bot — Zama FHEVM</title>
     <style>
       :root{
-        --bg:#f6f7fb; --panel:#ffffff; --muted:#6b7280; --text:#0f172a;
-        --primary:#ffd400; --primary-ink:#1f2937; --stroke:#e5e7eb;
-        --accent:#0ea5e9; --ok:#16a34a; --bad:#ef4444; --chip:#111827;
+        --bg:#f6f7fb;
+        --card:#ffffff;
+        --stroke:#e6e9f2;
+        --ink:#0b1324;
+        --muted:#77809a;
+        --accent:#ffd028;
+        --accent-ink:#1f1600;
+        --brand:#111;
+        --ring:rgba(17,17,17,.08);
+        --shadow:0 10px 22px rgba(20,25,45,.06), 0 2px 8px rgba(20,25,45,.04);
       }
       *{box-sizing:border-box}
-      html,body{height:100%}
-      body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
+      body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
 
-      /* top bar */
-      .topbar{position:sticky;top:0;z-index:20;background:var(--primary);color:var(--primary-ink);border-bottom:1px solid rgba(0,0,0,.06)}
-      .topbar .inner{max-width:1200px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:14px}
-      .brand{display:flex;align-items:center;gap:10px;font-weight:800}
-      .brand .dot{width:10px;height:10px;border-radius:3px;background:#111}
-      .spacer{flex:1}
-      .pill{background:#fff;border:1px solid var(--stroke);padding:8px 10px;border-radius:999px;font-weight:600}
-      .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:10px;border:0;cursor:pointer;font-weight:800}
-      .btn:disabled{opacity:.6;cursor:not-allowed}
-      .btn.dark{background:#111827;color:#fff}
-      .btn.primary{background:#111827;color:#fff}
-      .btn.light{background:#fff;border:1px solid var(--stroke);color:#111827}
+      /* Navbar */
+      .nav{position:sticky;top:0;z-index:20;background:var(--accent);box-shadow:0 2px 0 rgba(0,0,0,.05)}
+      .nav .bar{max-width:1180px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:14px 18px}
+      .brand{display:flex;align-items:center;gap:10px;color:#111;font-weight:800}
+      .pill{background:rgba(0,0,0,.06);border:1px solid rgba(0,0,0,.08);padding:6px 10px;border-radius:999px;font-size:12px;font-weight:700}
 
-      /* layout */
-      .wrap{max-width:1200px;margin:20px auto;padding:0 20px;display:grid;gap:18px}
-      .grid{display:grid;grid-template-columns:1fr;gap:18px}
-      @media (min-width:1024px){ .grid{grid-template-columns:1.2fr .8fr} }
-      .card{background:var(--panel);border:1px solid var(--stroke);border-radius:16px;padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.03)}
-      h1{margin:0 0 8px;font-size:26px}
-      h3{margin:0 0 12px;font-size:16px;display:flex;align-items:center;gap:8px}
+      /* Layout */
+      .wrap{max-width:1180px;margin:22px auto;padding:0 18px}
+      .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}
+      @media (max-width:980px){ .grid{grid-template-columns:1fr} }
+
+      /* Cards */
+      .card{background:var(--card);border:1px solid var(--stroke);border-radius:18px;padding:16px;box-shadow:var(--shadow)}
+      .card h3{margin:0 0 12px;font-size:16px}
+      .sub{margin:0 0 8px;font-size:13px;color:var(--muted)}
+      .section{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+      .section-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
       .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-      .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
-      label{display:flex;align-items:center;gap:8px;margin:0 0 6px;color:var(--muted);font-size:12px}
-      input,select{width:100%;padding:11px 12px;border:1px solid var(--stroke);border-radius:10px;background:#fff;color:var(--text)}
-      input[disabled]{background:#f3f4f6;color:#9ca3af}
+
+      /* Inputs */
+      label{display:flex;align-items:center;gap:6px;margin:0 0 6px;color:var(--muted);font-size:12px}
+      input{
+        width:100%;padding:11px 12px;border:1px solid var(--stroke);border-radius:12px;background:#fff;color:var(--ink);
+        outline:none;box-shadow:0 0 0 0 var(--ring);transition:box-shadow .15s,border-color .15s;
+      }
+      input:focus{border-color:#cfd5e6;box-shadow:0 0 0 4px var(--ring)}
+      input[disabled]{background:#f4f6fb;color:#97a0b5}
+
+      /* Buttons */
       .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
-      #status{margin-top:10px;color:var(--muted)}
-      .chip{display:inline-flex;align-items:center;gap:6px;background:#f3f4f6;border:1px solid var(--stroke);color:#111827;padding:6px 10px;border-radius:999px;font-weight:600}
-      .chip.ok{background:#eaffef;border-color:#b7f3c7;color:#065f46}
-      .chip.bad{background:#ffecec;border-color:#f7c2c2;color:#7f1d1d}
-      #log{margin:0;background:#0b1220;color:#e2e8f0;border-radius:12px;padding:12px;max-height:260px;overflow:auto;
-           font-family:"Fira Code",ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;white-space:pre-wrap}
-      /* tooltips */
-      .tip{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:#111827;color:#fff;
-           font-size:10px;font-weight:800;cursor:help;position:relative}
-      .tip::after{content:attr(data-tip);position:absolute;left:50%;top:calc(100% + 8px);transform:translateX(-50%);
-        background:#111827;color:#fff;padding:8px 10px;border-radius:8px;font-size:12px;line-height:1.3;white-space:pre-wrap;
-        min-width:220px;max-width:360px;opacity:0;pointer-events:none;transition:.15s;box-shadow:0 8px 20px rgba(0,0,0,.15)}
-      .tip:hover::after{opacity:1}
-      .sep{height:1px;background:var(--stroke);margin:12px 0}
-      .section-title{display:flex;align-items:center;gap:10px;margin:2px 0 0}
-      .section-title small{color:var(--muted)}
+      .btn{
+        padding:11px 14px;border:0;border-radius:12px;font-weight:800;cursor:pointer;box-shadow:0 2px 0 rgba(0,0,0,.06);
+        background:var(--accent);color:var(--accent-ink);
+      }
+      .btn:disabled{opacity:.55;cursor:not-allowed}
+      .btn-outline{background:#fff;border:1px solid var(--stroke);color:var(--ink);box-shadow:none}
+      .btn-grey{background:#eef1f7;color:#0b1324;font-weight:700}
+      .btn-ghost{background:transparent;border:1px solid var(--stroke);color:var(--ink)}
+
+      /* Top right controls */
+      .right{display:flex;align-items:center;gap:10px}
+      .badge{background:#fff;border:1px solid rgba(0,0,0,.08);padding:8px 12px;border-radius:999px;font-weight:700}
+      .connect{padding:10px 14px;border-radius:12px;background:#111;color:#fff;font-weight:800;border:0;cursor:pointer}
+
+      /* Stepper (small pills under navbar) */
+      .stepper{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 18px}
+      .step{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:12px;border:1px solid var(--stroke);background:#fff;box-shadow:var(--shadow)}
+      .step-num{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:#111;color:#fff;font-weight:800;font-size:12px}
+
+      /* Hints (tooltips) */
+      .hint{position:relative;display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;
+            border:1px solid var(--stroke);color:#52607d;font-size:11px;cursor:help;background:#fff}
+      .hint[data-tip]:hover:after{
+        content:attr(data-tip);position:absolute;left:50%;transform:translateX(-50%);
+        bottom:125%;min-width:220px;max-width:320px;background:#0b1324;color:#fff;padding:10px 12px;border-radius:10px;
+        font-size:12px;line-height:1.35;box-shadow:0 10px 22px rgba(11,19,36,.3)
+      }
+
+      /* Log */
+      #log{
+        margin:0;background:#0d1220;color:#c6d6ff;border-radius:14px;padding:12px;height:420px;overflow:auto;
+        font-family:"Fira Code",ui-monospace,monospace;font-size:12px
+      }
+      #status{margin-top:8px;color:#52607d}
+      .tip{font-size:12px;color:#6b7591;margin-top:6px}
     </style>
   </head>
   <body>
-    <!-- top bar -->
-    <header class="topbar">
-      <div class="inner">
+    <!-- NAVBAR -->
+    <div class="nav">
+      <div class="bar">
         <div class="brand">
-          <span class="dot"></span>
-          Private DCA Bot
+          <div style="width:12px;height:12px;background:#111;border-radius:3px"></div>
+          <span>Private DeFi Portfolio</span>
           <span class="pill">ZAMA FHEVM</span>
         </div>
-        <div class="spacer"></div>
-        <span class="pill">Network: Sepolia</span>
-        <button id="btnConnect" class="btn dark">Connect</button>
+        <div class="right">
+          <span class="badge">Network: Sepolia</span>
+          <!-- ВАЖНО: id должен быть именно btnConnect (его ждёт app.js) -->
+          <button id="btnConnect" class="connect">Connect</button>
+        </div>
       </div>
-    </header>
+    </div>
 
-    <main class="wrap">
-      <div class="section-title">
-        <h1>Portfolio Overview</h1>
-        <small>Encrypted DCA · public total decryption</small>
+    <div class="wrap">
+      <!-- STEPPER -->
+      <div class="stepper">
+        <div class="step"><span class="step-num">1</span>Connect</div>
+        <div class="step"><span class="step-num">2</span>Fund</div>
+        <div class="step"><span class="step-num">3</span>Plan</div>
+        <div class="step"><span class="step-num">4</span>Batch</div>
+        <div class="step"><span class="step-num">5</span>Finalize</div>
       </div>
 
       <div class="grid">
-        <!-- Connection -->
-        <section class="card">
-          <h3>Connection</h3>
-
-          <div class="row">
-            <div>
-              <label>Contract
-                <span class="tip" data-tip="Your DcaBatcher address on Sepolia. Transactions are sent here.">i</span>
-              </label>
-              <input id="ctr" placeholder="0x...DcaBatcher" />
+        <!-- LEFT COLUMN -->
+        <div class="col">
+          <!-- CONNECT -->
+          <div class="card">
+            <h3>Connection</h3>
+            <p class="sub">Fill the contract and service endpoints. Click <b>Connect</b> in the top bar to start.</p>
+            <div class="section">
+              <div>
+                <label>Contract <span class="hint" data-tip="DcaBatcher contract address on Sepolia">i</span></label>
+                <input id="ctr" placeholder="0x...DcaBatcher" />
+              </div>
+              <div>
+                <label>USDC <span class="hint" data-tip="Test USDC token address (6 decimals) on Sepolia">i</span></label>
+                <input id="usdc" placeholder="0x...USDC (6d)" />
+              </div>
             </div>
-            <div>
-              <label>USDC
-                <span class="tip" data-tip="ERC-20 USDC (6 decimals). Used for approve and deposit.">i</span>
-              </label>
-              <input id="usdc" placeholder="0x...USDC (6 decimals)" />
+            <div class="section" style="margin-top:8px">
+              <div>
+                <label>Relayer URL <span class="hint" data-tip="Zama Relayer endpoint used for encryption/decryption requests">i</span></label>
+                <input id="relayer" value="https://relayer.testnet.zama.cloud" />
+              </div>
+              <div>
+                <label>Gateway URL <span class="hint" data-tip="Sepolia FHEVM gateway">i</span></label>
+                <input id="gateway" value="https://gateway.sepolia.zama.ai/" />
+              </div>
+            </div>
+            <div class="section" style="margin-top:8px">
+              <div>
+                <label>KMS <span class="hint" data-tip="Zama KMS contract used by relayer infra">i</span></label>
+                <input id="kms" value="0x1364cBBf2cDF5032C47d8226a6f6FBD2AFCDacAC" />
+              </div>
+              <div>
+                <label>Your address</label>
+                <input id="me" disabled />
+              </div>
+            </div>
+            <div id="status">Waiting…</div>
+          </div>
+
+          <!-- FUND -->
+          <div class="card">
+            <h3>Deposit</h3>
+            <p class="sub">Uses the value from “Total budget (USDC, 6 decimals)” below. 1 USDC = 1,000,000.</p>
+            <div class="actions">
+              <button id="btnApprove" class="btn" disabled title="Approve contract to spend your USDC">Approve USDC</button>
+              <button id="btnDeposit" class="btn" disabled title="Deposit USDC into contract (uses Total budget below)">Deposit USDC</button>
+              <button class="btn-ghost" disabled title="Allowance & balance will be printed into the Debug Log">Check status</button>
             </div>
           </div>
 
-          <div class="row" style="margin-top:10px">
-            <div>
-              <label>Relayer URL
-                <span class="tip" data-tip="Zama Relayer endpoint used for encryption/public decryption.">i</span>
-              </label>
-              <input id="relayer" value="https://relayer.testnet.zama.cloud" />
+          <!-- PLAN -->
+          <div class="card">
+            <h3>Plan (Submit DCA intent)</h3>
+            <div class="section-3">
+              <div>
+                <label>Amount per tick (USDC, 6 decimals) <span class="hint" data-tip="USDC base units per tick. Example: 1000000 = 1 USDC">i</span></label>
+                <input id="amt" type="number" value="1000000" placeholder="1000000 = 1 USDC" />
+              </div>
+              <div>
+                <label>Total budget (USDC, 6 decimals) <span class="hint" data-tip="Max spend across swaps; also used by the Deposit button">i</span></label>
+                <input id="bud" type="number" value="5000000" placeholder="5000000 = 5 USDC" />
+              </div>
+              <div>
+                <label>Interval (sec) <span class="hint" data-tip="Pause between ticks for each participant">i</span></label>
+                <input id="intv" type="number" value="60" />
+              </div>
             </div>
-            <div>
-              <label>Gateway URL
-                <span class="tip" data-tip="SDK service endpoint used by the Relayer.">i</span>
-              </label>
-              <input id="gateway" value="https://gateway.sepolia.zama.ai/" />
+            <div class="row" style="margin-top:8px">
+              <div>
+                <label>Start time (unix) <span class="hint" data-tip="First eligible timestamp for your next tick">i</span></label>
+                <input id="start" type="number" />
+              </div>
+              <div>
+                <label>Participants (comma-separated) <span class="hint" data-tip="Addresses included when you trigger a batch. Each must create their intent.">i</span></label>
+                <input id="parts" placeholder="0xabc...,0xdef..." />
+              </div>
+            </div>
+            <div class="actions">
+              <button id="btnSubmit" class="btn" disabled title="Encrypts via Relayer and stores plan on-chain">Create Plan</button>
+            </div>
+            <div class="tip">All USDC values are base units (6 decimals).</div>
+          </div>
+
+          <!-- BATCH -->
+          <div class="card">
+            <h3>Batch</h3>
+            <div class="row">
+              <div>
+                <label>Batch ID <span class="hint" data-tip="Numeric id of the batch to inspect / finalize">i</span></label>
+                <input id="batchId" type="number" min="1" />
+              </div>
+              <div>
+                <label>Total handle (encrypted) <span class="hint" data-tip="Encrypted sum of contributions in the batch">i</span></label>
+                <input id="totalHandle" disabled />
+              </div>
+            </div>
+            <div class="actions">
+              <button id="btnTrigger" class="btn" disabled title="Collect due intents from “Participants” and form a batch">Trigger Batch</button>
+              <button id="btnGetBatch" class="btn-outline" disabled title="Read batch info (users, encrypted total, flags)">Get Batch Info</button>
+              <button id="btnPublicDecrypt" class="btn-outline" disabled title="Publicly decrypt only the aggregate total via Relayer">Public Decrypt Total</button>
             </div>
           </div>
 
-          <div class="row" style="margin-top:10px">
-            <div>
-              <label>KMS
-                <span class="tip" data-tip="FHEVM KMS contract address (Sepolia). Required by SDK.">i</span>
-              </label>
-              <input id="kms" value="0x1364cBBf2cDF5032C47d8226a6f6FBD2AFCDacAC" />
-            </div>
-            <div>
-              <label>Your Address
-                <span class="tip" data-tip="Your EOA from MetaMask. Used for signatures and encryption.">i</span>
-              </label>
-              <input id="me" disabled />
+          <!-- FINALIZE -->
+          <div class="card">
+            <h3>Finalize (owner)</h3>
+            <p class="sub">Uses the last publicly-decrypted total (USDC base units) and calls <code>finalizeBatchWithTotal</code>.</p>
+            <div class="actions">
+              <button id="btnFinalize" class="btn" disabled title="Owner-only. Uses last decrypted total or decrypts again if needed">Finalize Batch</button>
             </div>
           </div>
 
-          <div class="actions">
-            <button id="btnApprove" class="btn light" disabled>
-              Approve USDC <span class="tip" data-tip="ERC-20 approve so the contract can pull your USDC.">i</span>
-            </button>
-            <button id="btnDeposit" class="btn primary" disabled>
-              Deposit USDC <span class="tip" data-tip="Send USDC to the contract (amount is taken from “Total budget”).">i</span>
-            </button>
+          <!-- PRIVATE BALANCE -->
+          <div class="card">
+            <h3>My Private Balance</h3>
+            <div class="row">
+              <div>
+                <label>Encrypted handle <span class="hint" data-tip="Your encrypted ETH balance in the contract">i</span></label>
+                <input id="myHandle" disabled />
+              </div>
+              <div>
+                <label>Decrypted (wei) <span class="hint" data-tip="Only you can decrypt via Relayer (EIP-712 signature)">i</span></label>
+                <input id="myPlain" disabled />
+              </div>
+            </div>
+            <div class="actions">
+              <button id="btnGetBal" class="btn-outline" disabled title="Fetch my encrypted balance handle from the contract">Get My Balance</button>
+              <button id="btnUserDecrypt" class="btn-outline" disabled title="User-level decrypt via Relayer">User Decrypt</button>
+            </div>
           </div>
+        </div>
 
-          <div id="status" class="chip">Waiting…</div>
-        </section>
-
-        <!-- Debug -->
-        <section class="card">
-          <h3>Debug <span class="tip" data-tip="Frontend action logs and contract events.">i</span></h3>
-          <pre id="log"></pre>
-        </section>
+        <!-- RIGHT COLUMN: DEBUG -->
+        <div class="col">
+          <div class="card">
+            <h3>Debug Log</h3>
+            <pre id="log"></pre>
+          </div>
+        </div>
       </div>
+    </div>
 
-      <!-- DCA + Balances -->
-      <div class="grid">
-        <section class="card">
-          <h3>Create DCA Intent</h3>
-
-          <div class="row3">
-            <div>
-              <label>Amount per tick (USDC, 6 decimals)
-                <span class="tip" data-tip="How much to spend each cycle. 1 USDC = 1,000,000. Encrypted.">i</span>
-              </label>
-              <input id="amt" type="number" value="1000000" />
-            </div>
-            <div>
-              <label>Total budget (USDC, 6 decimals)
-                <span class="tip" data-tip="Maximum budget for the strategy. Decreases by the tick amount each run. Encrypted.">i</span>
-              </label>
-              <input id="bud" type="number" value="5000000" />
-            </div>
-            <div>
-              <label>Interval (sec)
-                <span class="tip" data-tip="Run frequency in seconds. Public value.">i</span>
-              </label>
-              <input id="intv" type="number" value="60" />
-            </div>
-          </div>
-
-          <div class="row" style="margin-top:10px">
-            <div>
-              <label>Start (unix)
-                <span class="tip" data-tip="First run timestamp. If in the past, the user will join the next due batch.">i</span>
-              </label>
-              <input id="start" type="number" />
-            </div>
-            <div>
-              <label>Participants (comma-separated)
-                <span class="tip" data-tip="Addresses to consider for the batch. Only those with nextRunTs ≤ now are included.">i</span>
-              </label>
-              <input id="parts" placeholder="0xabc...,0xdef..." />
-            </div>
-          </div>
-
-          <div class="actions">
-            <button id="btnSubmit" class="btn light" disabled>
-              Submit Intent <span class="tip" data-tip="Encrypt amount/budget and save the schedule.">i</span>
-            </button>
-            <button id="btnTrigger" class="btn dark" disabled>
-              Trigger Batch <span class="tip" data-tip="Aggregate encrypted contributions and store total handle.">i</span>
-            </button>
-          </div>
-
-          <div class="sep"></div>
-          <small style="color:var(--muted)">Tip: 1 USDC = 1,000,000 (6 decimals)</small>
-        </section>
-
-        <section class="card">
-          <h3>Balances & Batch</h3>
-
-          <div class="row">
-            <div>
-              <label>My Encrypted ETH (handle)
-                <span class="tip" data-tip="Handle of your encrypted ETH balance stored in the contract.">i</span>
-              </label>
-              <input id="myHandle" disabled />
-            </div>
-            <div>
-              <label>Decrypted (wei)
-                <span class="tip" data-tip="Result of your personal user decryption — in wei.">i</span>
-              </label>
-              <input id="myPlain" disabled />
-            </div>
-          </div>
-
-          <div class="row" style="margin-top:10px">
-            <div>
-              <label>Batch ID
-                <span class="tip" data-tip="The batch number you’re working with (1, 2, 3 …).">i</span>
-              </label>
-              <input id="batchId" type="number" min="1" />
-            </div>
-            <div>
-              <label>Total handle (batch)
-                <span class="tip" data-tip="Handle of the encrypted Σ(contrib_i). Can be publicly decrypted via Relayer.">i</span>
-              </label>
-              <input id="totalHandle" disabled />
-            </div>
-          </div>
-
-          <div class="actions">
-            <button id="btnGetBal" class="btn light" disabled>
-              Get My Balance <span class="tip" data-tip="Fetch the handle of your encrypted balance from the contract.">i</span>
-            </button>
-            <button id="btnUserDecrypt" class="btn light" disabled>
-              User Decrypt <span class="tip" data-tip="Personal decryption via EIP-712 signature.">i</span>
-            </button>
-            <button id="btnGetBatch" class="btn light" disabled>
-              Get Batch Info <span class="tip" data-tip="Read total handle, users, and status flags of the batch.">i</span>
-            </button>
-            <button id="btnPublicDecrypt" class="btn light" disabled>
-              Public Decrypt Total <span class="tip" data-tip="Publicly decrypt Σcontrib_i (the contract marks it as publicly decryptable).">i</span>
-            </button>
-            <button id="btnFinalize" class="btn dark" disabled>
-              Finalize (owner) <span class="tip" data-tip="Send the plaintext total to the contract, swap USDC→ETH, and distribute (encrypted). Requires owner role.">i</span>
-            </button>
-          </div>
-        </section>
-      </div>
-    </main>
-
-    <!-- App -->
+    <!-- App logic (unchanged) -->
     <script type="module" src="./js/app.js"></script>
   </body>
 </html>
