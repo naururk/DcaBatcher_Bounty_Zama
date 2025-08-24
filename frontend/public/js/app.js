@@ -5,7 +5,7 @@ import { initSDK, createInstance, SepoliaConfig, generateKeypair } from "https:/
 
 /* ======= Defaults ======= */
 const DEFAULTS = {
-  CONTRACT: "0x42DaD6cD2A720383340A23d80119C165d56853C7",
+  CONTRACT: "0x39b823259c309081b59442A19BA3368dC2330E19",
   USDC:     "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
   RELAYER:  "https://relayer.testnet.zama.cloud",
   GATEWAY:  "https://gateway.sepolia.zama.ai/",
